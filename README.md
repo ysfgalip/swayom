@@ -1,0 +1,1 @@
+# swayom (Sway Output Manager)
