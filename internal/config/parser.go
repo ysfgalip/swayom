@@ -2,8 +2,10 @@ package config
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 )
 
@@ -84,4 +86,65 @@ func Parse(r io.Reader) ([]string, error) {
 	flush()
 
 	return out, nil
+}
+
+func findConfigMarker(marker []string, r io.Reader) (int, int64, int64, error) {
+	var blockMarker []string
+	lineNr := 0
+	var offset int64 = 0
+	var block int64 = -1
+	blockLine := -1
+	br := bufio.NewReader(r)
+
+	for {
+		line, err := br.ReadString('\n')
+		if err != nil && err != io.EOF {
+			return 0, 0, 0, fmt.Errorf("error while reading file at byte %d: %w", offset, err)
+		}
+		lineNr++
+		lineStart := offset
+		offset += int64(len(line))
+		line = strings.TrimSpace(line)
+
+		switch {
+		case line == "@@":
+			if block == -1 {
+				return 0, 0, 0, fmt.Errorf("invalid block ending at byte %d", offset)
+			}
+			if sameElements(blockMarker, marker) {
+				return blockLine, block, lineStart, nil
+			}
+			block = -1
+			blockLine = -1
+			blockMarker = nil
+
+		case strings.HasPrefix(line, "@@"):
+			if block > -1 {
+				return 0, 0, 0, fmt.Errorf("block start before closing")
+			}
+			line = strings.TrimSpace(strings.TrimPrefix(line, "@@"))
+			if errJson := json.Unmarshal([]byte(line), &blockMarker); errJson != nil {
+				return 0, 0, 0, fmt.Errorf("invalid json array found at byte %d: %w", offset, errJson)
+			}
+			block = offset
+			blockLine = lineNr
+		}
+
+		if err == io.EOF {
+			if block > -1 {
+				return 0, 0, 0, fmt.Errorf("block unclosed at EOF")
+			}
+			return 0, block, 0, nil
+		}
+	}
+}
+
+func sameElements(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	a2, b2 := slices.Clone(a), slices.Clone(b)
+	slices.Sort(a2)
+	slices.Sort(b2)
+	return slices.Equal(a2, b2)
 }
