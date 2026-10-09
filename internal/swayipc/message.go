@@ -35,7 +35,7 @@ func (ipc *IPC) RunCommand(command string) error {
 	var replyPayload CommandReply
 	err = json.Unmarshal(reply.Payload, &replyPayload)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling command reply")
+		return fmt.Errorf("error unmarshalling command reply: %w", err)
 	}
 
 	if !replyPayload.Success {

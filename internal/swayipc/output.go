@@ -21,7 +21,10 @@ type Output struct {
 }
 
 func (ipc *IPC) GetOutputs() ([]*Output, error) {
-	ipc.sendHeader(0, GetOutputsNr)
+	err := ipc.sendHeader(0, GetOutputsNr)
+	if err != nil {
+		return nil, err
+	}
 
 	reply, err := ipc.readReply()
 	if err != nil {
@@ -51,7 +54,7 @@ func (ipc *IPC) SubscribeOutput() error {
 		return err
 	}
 
-	ipc.sendPayload(payload)
+	err = ipc.sendPayload(payload)
 	if err != nil {
 		return err
 	}
@@ -65,7 +68,7 @@ func (ipc *IPC) SubscribeOutput() error {
 		return fmt.Errorf("wrong reply message")
 	}
 
-	var replyPayload map[string]interface{}
+	var replyPayload map[string]any
 	err = json.Unmarshal(reply.Payload, &replyPayload)
 	if err != nil {
 		return fmt.Errorf("cannot unmarshal the subscription reply: %w", err)
@@ -88,5 +91,4 @@ func (ipc *IPC) ListenEventOutput() (bool, error) {
 	}
 
 	return true, nil
-
 }

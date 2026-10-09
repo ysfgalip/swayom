@@ -48,7 +48,6 @@ func (ipc *IPC) sendHeader(length uint32, msgtype uint32) error {
 }
 
 func (ipc *IPC) sendPayload(payload []byte) error {
-
 	_, err := ipc.socket.Write(payload)
 	if err != nil {
 		return fmt.Errorf("Error sending Payload: %w", err)
