@@ -32,6 +32,10 @@ func NewIPC(socketFile string) (*IPC, error) {
 	return ipc, nil
 }
 
+func (ipc *IPC) Close() {
+	ipc.socket.Close()
+}
+
 func (ipc *IPC) sendHeader(length uint32, msgtype uint32) error {
 	header := make([]byte, IPC_HEADER_SIZE)
 	copy(header, []byte(IPC_MAGIC))
