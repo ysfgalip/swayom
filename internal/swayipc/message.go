@@ -32,14 +32,14 @@ func (ipc *IPC) RunCommand(command string) error {
 		return fmt.Errorf("error reading command reply: %w", err)
 	}
 
-	var replyPayload CommandReply
+	var replyPayload []*CommandReply
 	err = json.Unmarshal(reply.Payload, &replyPayload)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling command reply: %w", err)
 	}
 
-	if !replyPayload.Success {
-		return fmt.Errorf("command unsuccessful: %s", replyPayload.Error)
+	if !replyPayload[0].Success {
+		return fmt.Errorf("command unsuccessful: %s", replyPayload[0].Error)
 	}
 
 	return nil
