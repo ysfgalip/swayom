@@ -88,7 +88,7 @@ func Parse(r io.Reader) ([]string, error) {
 	return out, nil
 }
 
-func findConfigMarker(marker []string, r io.Reader) (int, int64, int64, error) {
+func findConfigMarker(marker []string, r io.Reader) (line int, start int64, length int64, err error) {
 	var blockMarker []string
 	lineNr := 0
 	var offset int64 = 0
