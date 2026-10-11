@@ -1,3 +1,4 @@
+// Package manager implements the management of the configuration and the ipc implementation
 package manager
 
 import (
@@ -46,9 +47,11 @@ func Manage() {
 					fmt.Println(err)
 				}
 			}
-			ipcSubscribe.Close()
+			if err = ipcSubscribe.Close(); err != nil {
+				fmt.Println(err)
+			}
 			ipcSubscribe, _ = swayipc.NewIPC(os.Getenv("SWAYSOCK"))
-			if err := ipcSubscribe.SubscribeOutput(); err != nil {
+			if err = ipcSubscribe.SubscribeOutput(); err != nil {
 				fmt.Println(err)
 			}
 		}

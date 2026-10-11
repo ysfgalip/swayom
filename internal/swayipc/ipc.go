@@ -1,3 +1,4 @@
+// Package swayipc handles the ipc with the sway instance
 package swayipc
 
 import (
@@ -7,9 +8,9 @@ import (
 )
 
 const (
-	IPC_HEADER_SIZE = 14
-	IPC_MAGIC_SIZE  = 6
-	IPC_MAGIC       = "i3-ipc"
+	IpcHeaderSize = 14
+	IpcMagicSize  = 6
+	IpcMagic      = "i3-ipc"
 )
 
 type Reply struct {
@@ -32,20 +33,24 @@ func NewIPC(socketFile string) (*IPC, error) {
 	return ipc, nil
 }
 
-func (ipc *IPC) Close() {
-	ipc.socket.Close()
+func (ipc *IPC) Close() error {
+	if err := ipc.socket.Close(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (ipc *IPC) sendHeader(length uint32, msgtype uint32) error {
-	header := make([]byte, IPC_HEADER_SIZE)
-	copy(header, []byte(IPC_MAGIC))
+	header := make([]byte, IpcHeaderSize)
+	copy(header, []byte(IpcMagic))
 
-	binary.LittleEndian.PutUint32(header[IPC_MAGIC_SIZE:], length)
-	binary.LittleEndian.PutUint32(header[IPC_MAGIC_SIZE+4:], msgtype)
+	binary.LittleEndian.PutUint32(header[IpcMagicSize:], length)
+	binary.LittleEndian.PutUint32(header[IpcMagicSize+4:], msgtype)
 
 	_, err := ipc.socket.Write(header)
 	if err != nil {
-		return fmt.Errorf("Error sending Header: %w", err)
+		return fmt.Errorf("error sending Header: %w", err)
 	}
 
 	return nil
@@ -54,21 +59,21 @@ func (ipc *IPC) sendHeader(length uint32, msgtype uint32) error {
 func (ipc *IPC) sendPayload(payload []byte) error {
 	_, err := ipc.socket.Write(payload)
 	if err != nil {
-		return fmt.Errorf("Error sending Payload: %w", err)
+		return fmt.Errorf("error sending Payload: %w", err)
 	}
 	return nil
 }
 
 func (ipc *IPC) readReply() (*Reply, error) {
-	header := make([]byte, IPC_HEADER_SIZE)
+	header := make([]byte, IpcHeaderSize)
 
 	_, err := ipc.socket.Read(header)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot read header from reply: %w", err)
+		return nil, fmt.Errorf("cannot read header from reply: %w", err)
 	}
 
-	if string(header[:6]) != IPC_MAGIC {
-		return nil, fmt.Errorf("Missing magic string in reply")
+	if string(header[:6]) != IpcMagic {
+		return nil, fmt.Errorf("missing magic string in reply")
 	}
 	payloadLen := binary.LittleEndian.Uint32(header[6:10])
 
@@ -76,7 +81,7 @@ func (ipc *IPC) readReply() (*Reply, error) {
 
 	_, err = ipc.socket.Read(payload)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot read payload from reply: %w", err)
+		return nil, fmt.Errorf("cannot read payload from reply: %w", err)
 	}
 
 	reply := &Reply{}

@@ -1,3 +1,4 @@
+// Package config implements the parsing of the swayom configuration
 package config
 
 import (

@@ -123,8 +123,8 @@ func findConfigMarker(marker []string, r io.Reader) (line int, start int64, leng
 				return 0, 0, 0, fmt.Errorf("block start before closing")
 			}
 			line = strings.TrimSpace(strings.TrimPrefix(line, "@@"))
-			if errJson := json.Unmarshal([]byte(line), &blockMarker); errJson != nil {
-				return 0, 0, 0, fmt.Errorf("invalid json array found at byte %d: %w", offset, errJson)
+			if errJSON := json.Unmarshal([]byte(line), &blockMarker); errJSON != nil {
+				return 0, 0, 0, fmt.Errorf("invalid json array found at byte %d: %w", offset, errJSON)
 			}
 			block = offset
 			blockLine = lineNr
