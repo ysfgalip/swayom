@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path"
 
@@ -14,5 +15,6 @@ func main() {
 	configDir := flag.String("config", defaultConfigDir, "specify a custom config file")
 	flag.Parse()
 
-	manager.Manage(*configDir)
+	err := manager.Manage(*configDir)
+	fmt.Fprintln(os.Stderr, err)
 }

@@ -28,7 +28,8 @@ func (s *SwayConfig) Read(marker []string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error getting configs from file %s: %w", s.filename, err)
 	} else if start == -1 {
-		return nil, fmt.Errorf("no matching marker found")
+		fmt.Println("no configuration marker found for the outputs")
+		return nil, nil
 	}
 
 	sr := io.NewSectionReader(f, start, end-start)

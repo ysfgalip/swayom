@@ -2,6 +2,7 @@
 package manager
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -9,47 +10,55 @@ import (
 	"github.com/ysfgalip/swayom/internal/swayipc"
 )
 
-func Manage(configDir string) {
+func Manage(configDir string) error {
 	sc := config.NewSwayConfig(configDir)
+	swaySocket := os.Getenv("SWAYSOCK")
+	var errs []error
 
-	ipcSubscribe, _ := swayipc.NewIPC(os.Getenv("SWAYSOCK"))
-	ipcConfig, _ := swayipc.NewIPC(os.Getenv("SWAYSOCK"))
-	ipcCmd, _ := swayipc.NewIPC(os.Getenv("SWAYSOCK"))
+	ipcSubscribe, err := swayipc.NewIPC(swaySocket)
+	errs = append(errs, err)
+	ipcConfig, err := swayipc.NewIPC(swaySocket)
+	errs = append(errs, err)
+	ipcCmd, err := swayipc.NewIPC(swaySocket)
+	errs = append(errs, err)
 
-	if err := ipcSubscribe.SubscribeOutput(); err != nil {
-		fmt.Println(err)
+	if err = errors.Join(errs...); err != nil {
+		return err
 	}
 
-	for {
-		ok, err := ipcSubscribe.ListenEventOutput()
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
+	if err := ipcSubscribe.SubscribeOutput(); err != nil {
+		return err
+	}
 
+	ok := true
+	for {
 		if ok {
-			fmt.Println("output change")
 			outputs, err := ipcConfig.GetOutputs()
 			if err != nil {
-				fmt.Println(err)
+				return err
 			}
 			outputSlice := getOutputIDs(outputs)
 			conf, err := sc.Read(outputSlice)
 			if err != nil {
-				fmt.Println(err)
+				return err
 			}
 			for _, confCmd := range conf {
 				err = ipcCmd.RunCommand(confCmd)
 				if err != nil {
-					fmt.Println(err)
+					return err
 				}
 			}
 			if err = ipcSubscribe.Close(); err != nil {
-				fmt.Println(err)
+				fmt.Fprintln(os.Stderr, err)
 			}
-			ipcSubscribe, _ = swayipc.NewIPC(os.Getenv("SWAYSOCK"))
+			ipcSubscribe, _ = swayipc.NewIPC(swaySocket)
 			if err = ipcSubscribe.SubscribeOutput(); err != nil {
-				fmt.Println(err)
+				return err
+			}
+
+			ok, err = ipcSubscribe.ListenEventOutput()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
 			}
 		}
 	}
