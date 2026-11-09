@@ -4,15 +4,12 @@ package manager
 import (
 	"fmt"
 	"os"
-	"path"
 
 	"github.com/ysfgalip/swayom/internal/config"
 	"github.com/ysfgalip/swayom/internal/swayipc"
 )
 
-func Manage() {
-	homeDir := os.Getenv("HOME")
-	configDir := path.Join(homeDir, ".config/swayom/config")
+func Manage(configDir string) {
 	sc := config.NewSwayConfig(configDir)
 
 	ipcSubscribe, _ := swayipc.NewIPC(os.Getenv("SWAYSOCK"))
